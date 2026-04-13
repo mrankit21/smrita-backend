@@ -1,0 +1,108 @@
+# SMRITA Backend — API Reference
+# Base URL: http://localhost:5000/api
+
+## ── AUTH ────────────────────────────────────────
+POST   /auth/register          Register new user
+POST   /auth/login             Login user → returns JWT token
+GET    /auth/me                Get my profile          [Private]
+PUT    /auth/update-profile    Update name/phone/addr  [Private]
+PUT    /auth/change-password   Change password         [Private]
+
+## ── PRODUCTS ────────────────────────────────────
+GET    /products               Get all products
+  Query: ?category=Sandalwood&search=chandan&sort=rating&featured=true&page=1&limit=20
+GET    /products/featured      Get featured products
+GET    /products/:id           Get single product
+POST   /products               Create product          [Admin] (multipart/form-data with image)
+PUT    /products/:id           Update product          [Admin] (multipart/form-data with image)
+DELETE /products/:id           Delete product          [Admin]
+POST   /products/:id/reviews   Add review              [Private]
+
+## ── ORDERS ─────────────────────────────────────
+POST   /orders                 Place order             [Private]
+GET    /orders/my-orders       Get my orders           [Private]
+GET    /orders/admin/all       Get all orders          [Admin]
+GET    /orders/admin/stats     Dashboard stats         [Admin]
+GET    /orders/:id             Get single order        [Private]
+PUT    /orders/:id/cancel      Cancel order            [Private]
+PUT    /orders/admin/:id/status Update order status    [Admin]
+
+## ── PAYMENT ─────────────────────────────────────
+POST   /payment/create-order   Create Razorpay order   [Private]
+POST   /payment/verify         Verify payment          [Private]
+
+## ── WISHLIST ────────────────────────────────────
+GET    /wishlist               Get my wishlist         [Private]
+POST   /wishlist/toggle/:id    Toggle product          [Private]
+DELETE /wishlist/clear         Clear wishlist          [Private]
+
+## ── CONTACT ─────────────────────────────────────
+POST   /contact                Submit contact form     [Public]
+GET    /contact                Get all messages        [Admin]
+PUT    /contact/:id/read       Mark as read            [Admin]
+
+## ── USERS (Admin) ───────────────────────────────
+GET    /users                  Get all users           [Admin]
+GET    /users/:id              Get user + orders       [Admin]
+PUT    /users/:id/toggle-status Activate/deactivate   [Admin]
+PUT    /users/:id/make-admin   Make user admin         [Admin]
+
+## ── HEALTH ──────────────────────────────────────
+GET    /health                 Server health check     [Public]
+
+## ── AUTHENTICATION ──────────────────────────────
+All [Private] and [Admin] routes require:
+Header: Authorization: Bearer <your_jwt_token>
+
+## ── REQUEST EXAMPLES ────────────────────────────
+
+### Register
+POST /api/auth/register
+{
+  "name": "Priya Sharma",
+  "email": "priya@example.com",
+  "password": "mypassword123",
+  "phone": "9876543210"
+}
+
+### Login
+POST /api/auth/login
+{
+  "email": "priya@example.com",
+  "password": "mypassword123"
+}
+
+### Place Order
+POST /api/orders
+Authorization: Bearer <token>
+{
+  "items": [
+    { "product": "<product_id>", "quantity": 2 },
+    { "product": "<product_id>", "quantity": 1 }
+  ],
+  "shippingAddress": {
+    "name": "Priya Sharma",
+    "phone": "9876543210",
+    "address": "123, Main Street",
+    "city": "Delhi",
+    "state": "Delhi",
+    "pincode": "110001"
+  },
+  "paymentMethod": "cod"
+}
+
+### Combo Pricing Logic
+- 1 item  = ₹100
+- 2 items = ₹200
+- 3 items = ₹250 (save ₹50)
+- 4 items = ₹350 (3+1)
+- 6 items = ₹500 (save ₹100)
+- Auto-calculated server-side on every order
+
+## ── COMBO OFFER LOGIC ───────────────────────────
+The server automatically applies combo pricing:
+  combos      = floor(totalQty / 3)
+  remainder   = totalQty % 3
+  totalAmount = (combos × 250) + (remainder × 100)
+  discount    = regularTotal - totalAmount
+No coupon code needed — fully automatic.
