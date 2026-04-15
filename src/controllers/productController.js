@@ -62,7 +62,8 @@ const getProduct = async (req, res, next) => {
 // @access  Admin
 const createProduct = async (req, res, next) => {
   try {
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : req.body.image || '';
+    // Cloudinary se URL milega req.file.path mein
+    const imageUrl = req.file ? req.file.path : req.body.image || '';
     const product = await Product.create({ ...req.body, image: imageUrl });
     res.status(201).json({ success: true, message: 'Product created successfully.', product });
   } catch (error) {
@@ -75,7 +76,8 @@ const createProduct = async (req, res, next) => {
 // @access  Admin
 const updateProduct = async (req, res, next) => {
   try {
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+    // Cloudinary se URL milega req.file.path mein
+    const imageUrl = req.file ? req.file.path : undefined;
     const updateData = imageUrl ? { ...req.body, image: imageUrl } : req.body;
     const product = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
     if (!product) return res.status(404).json({ success: false, message: 'Product not found.' });
